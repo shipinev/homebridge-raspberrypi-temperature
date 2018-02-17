@@ -4,7 +4,7 @@ const fs = require('fs');
 const packageFile = require("./package.json");
 
 module.exports = function(homebridge) {
-    if(!isConfig(homebridge.user.configPath(), "accessories", "RaspberryPiTemperature")) {
+    if(!isConfig(homebridge.user.configPath(), "accessories", "TinkerBoardCPUTemperature")) {
         return;
     }
     
@@ -13,7 +13,7 @@ module.exports = function(homebridge) {
     Characteristic = homebridge.hap.Characteristic;
     UUIDGen = homebridge.hap.uuid;
 
-    homebridge.registerAccessory('homebridge-raspberrypi-temperature', 'RaspberryPiTemperature', RaspberryPiTemperature);
+    homebridge.registerAccessory('homebridge-tinker-board-temperature', 'TinkerBoardCPUTemperature', TinkerBoardCPUTemperature);
 }
 
 function isConfig(configFile, type, name) {
@@ -32,13 +32,12 @@ function isConfig(configFile, type, name) {
                 return true;
             }
         }
-    } else {
     }
     
     return false;
 }
 
-function RaspberryPiTemperature(log, config) {
+function TinkerBoardCPUTemperature(log, config) {
     if(null == config) {
         return;
     }
@@ -58,25 +57,27 @@ function RaspberryPiTemperature(log, config) {
   
 }
 
-RaspberryPiTemperature.prototype = {
+TinkerBoardCPUTemperature.prototype = {
     getServices: function() {
         var that = this;
         
         var infoService = new Service.AccessoryInformation();
         infoService
-            .setCharacteristic(Characteristic.Manufacturer, "RaspberryPi")
-            .setCharacteristic(Characteristic.Model, "3B")
-            .setCharacteristic(Characteristic.SerialNumber, "Undefined")
+            .setCharacteristic(Characteristic.Manufacturer, "ASUS")
+            .setCharacteristic(Characteristic.Model, "Tinker Board")
+            .setCharacteristic(Characteristic.SerialNumber, "-")
             .setCharacteristic(Characteristic.FirmwareRevision, packageFile.version);
         
-        var raspberrypiService = new Service.TemperatureSensor(that.name);
-        var currentTemperatureCharacteristic = raspberrypiService.getCharacteristic(Characteristic.CurrentTemperature);
+        var tinkerBoardService = new Service.TemperatureSensor(that.name);
+        var currentTemperatureCharacteristic = tinkerBoardService.getCharacteristic(Characteristic.CurrentTemperature);
+
         function getCurrentTemperature() {
             var data = fs.readFileSync(that.readFile, "utf-8");
             var temperatureVal = parseFloat(data) / 1000;
-            that.log.debug("update currentTemperatureCharacteristic value: " + temperatureVal);
+            that.log.debug("currentTemperatureCharacteristic: " + temperatureVal);
             return temperatureVal;
         }
+
         currentTemperatureCharacteristic.updateValue(getCurrentTemperature());
         if(that.updateInterval) {
             setInterval(() => {
@@ -87,7 +88,7 @@ RaspberryPiTemperature.prototype = {
             callback(null, getCurrentTemperature());
         });
         
-        return [infoService, raspberrypiService];
+        return [infoService, tinkerBoardService];
     }
 }
 
